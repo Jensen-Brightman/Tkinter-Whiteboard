@@ -245,6 +245,14 @@ class WhiteboardApp:
                                                                ("All files", "*.*")]
             )
 
+        # Get the position of the objects
+        updated_objects = self.objects.copy()
+
+        for i in range(len(updated_objects)):
+            obj = updated_objects[i]
+            updated_objects[i]["points"] = self.canvas.coords(obj["id"])
+
+
         with open(self.open_directory, "w") as file:
             file.write( json.dumps(self.objects, indent=4) )
 
@@ -409,62 +417,29 @@ class WhiteboardApp:
 
         return simple_coords
 
-    def apply_offset(self, coords, scale=False):
-        new_coords = []
-
-        canvas_width = self.canvas.winfo_width()
-        canvas_height = self.canvas.winfo_height()
-        canvas_center_x = canvas_width / 2
-        canvas_center_y = canvas_height / 2
-
-        for i, coord in enumerate(coords):
-            # Apply camera offset (panning) first
-            world_space = coord + (self.camera_offset[0] if i % 2 == 0 else self.camera_offset[1])
-
-            if scale:
-                # Calculate the distance from the center of the canvas
-                center_dist = world_space - (canvas_center_x if i % 2 == 0 else canvas_center_y)
-
-                # Apply scaling based on zoom offset
-                scaled_coord = world_space + center_dist * (self.zoom_offset - 1)
-                new_coords.append(scaled_coord)
-            else:
-                # If no scaling, just apply the panning offset
-                new_coords.append(world_space)
-
-        return new_coords
-
-
     def mouse_up(self, event):
         if not self.tool == "pen": return
 
         self.title_changes_made()
 
-        # Resent coords
+        # Reset coords
         self.last_x, self.last_y = None, None
 
 
         # Create new line
         if len(self.line_coord_cache) <= 2:
             points = event.x - self.pen_width, event.y - self.pen_width, event.x + self.pen_width, event.y + self.pen_width
-            offset_points = self.apply_offset(points)
             ref = self.canvas.create_oval(points,
                                     fill=self.pen_color)
-            self.objects.append({"id":ref, "type":"oval", "points":offset_points, "color":self.pen_color})
+            self.objects.append({"id":ref, "type":"oval", "color":self.pen_color})
         else:
             coords = self.simplify_line()
-            offset_coords = self.apply_offset(coords)
-            try:
-                ref = self.canvas.create_line(coords, 
-                                        fill=self.pen_color, width=self.pen_width,
-                                        smooth=1)
-                
-                self.objects.append({"id":ref, "type":"line", "points":offset_coords, 
-                                     "color":self.pen_color, "width":self.pen_width})
-
-                print(f"Created line with {len(coords)/2} segments, {len(self.line_coord_cache)/2} before simplification")
-            except:
-                print(f"ERROR: Line segments: {len(coords)}")
+            ref = self.canvas.create_line(coords, 
+                                    fill=self.pen_color, width=self.pen_width,
+                                    smooth=1)
+            
+            self.objects.append({"id":ref, "type":"line", 
+                                    "color":self.pen_color, "width":self.pen_width})
 
         # Delete temporary lines
         for ln in self.line_cache:
