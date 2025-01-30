@@ -104,7 +104,6 @@ class WhiteboardApp:
         
         for name, color in self.colors.items():
             if name == "white": continue
-            print(f"{name} - {color}")
             self._add_to_context(self.color_context_m, name, 
                                  lambda color=color, name=name: self.set_color(color, name), 
                                  color, 
@@ -296,7 +295,6 @@ class WhiteboardApp:
         self.unsaved_changes =True
 
     def start_pan(self, event) -> None:
-        print("Start pan")
         self.pan_start = (event.x, event.y)
 
     def pan(self, event) -> None:
@@ -411,7 +409,7 @@ class WhiteboardApp:
 
         return simple_coords
 
-    def apply_offset(self, coords, scale=True):
+    def apply_offset(self, coords, scale=False):
         new_coords = []
 
         canvas_width = self.canvas.winfo_width()
@@ -435,26 +433,6 @@ class WhiteboardApp:
                 new_coords.append(world_space)
 
         return new_coords
-
-
-    # def apply_offset(self, coords, scale=True):
-    #     new_coords = []
-
-    #     for i, coord in enumerate(coords):
-    #         # Get the world space coordinates by adding the camera offset
-    #         world_space = coord + self.camera_offset[0] if i % 2 == 0 else coord + self.camera_offset[1]
-
-    #         if scale:
-    #             # Calculate the center distance from the center of the canvas
-    #             center_dist = world_space - (self.canvas.winfo_width() / 2 if i % 2 == 0 else self.canvas.winfo_height() / 2)
-                
-    #             # Apply scaling based on zoom (if scale=True)
-    #             new_coords.append(world_space + center_dist * (self.zoom_offset - 1))
-    #         else:
-    #             # If scale=False, no scaling is applied, only account for panning
-    #             new_coords.append(world_space)
-
-    #     return new_coords
 
 
     def mouse_up(self, event):
@@ -515,10 +493,8 @@ class WhiteboardApp:
             self.zoom_out(event)
 
     def key_down(self, event):
-        print(event.keysym, self.hotkey_down)
         if self.hotkey_down:
             key: str = event.keysym
-            print(f"{self.hotkey} + {key}")
             if (key.isnumeric() and 
                 int(key) > 0 and 
                 int(key) <= 10 and 
